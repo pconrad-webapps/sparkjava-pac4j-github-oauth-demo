@@ -21,6 +21,8 @@ import java.util.Map;
 
 import spark.ModelAndView;
 
+import spark.Spark;
+
 import static spark.Spark.get;
 
 /**
@@ -30,10 +32,26 @@ import static spark.Spark.get;
  */
 public class MustacheTemplateExample {
     public static void main(String[] args) {
-        Map map = new HashMap();
-        map.put("name", "Sam");
+	Spark.staticFileLocation("/static");
+	final Map nullMap = new HashMap();
 
-        // hello.mustache file is in resources/templates directory
-        get("/hello", (rq, rs) -> new ModelAndView(map, "hello.mustache"), new MustacheTemplateEngine());
+        get("/", (rq, rs) -> new ModelAndView(nullMap, "home.mustache"), new MustacheTemplateEngine());
+	
+        get("/ctof", (rq, rs) -> new ModelAndView(nullMap, "ctof.mustache"), new MustacheTemplateEngine());
+
+	get("/ctof_result",
+	    (rq, rs) ->
+	    {
+		Map model = new HashMap();
+		// replace next two lines with lines that get the form input from the request object
+		// then do the calculation, and store into the map
+		model.put("ctemp","20");
+		model.put("ftemp","-42");	       
+		return new ModelAndView(model, "ctof_result.mustache");
+	    },
+	    new MustacheTemplateEngine()
+	    );
+	
+
     }
 }
