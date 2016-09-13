@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package spark.template.mustache;
+package org.pconrad.webapps.sparkjava;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -43,10 +43,19 @@ public class MustacheTemplateExample {
 	    (rq, rs) ->
 	    {
 		Map model = new HashMap();
-		// replace next two lines with lines that get the form input from the request object
-		// then do the calculation, and store into the map
-		model.put("ctemp","20");
-		model.put("ftemp","-42");	       
+		String ctempAsString = rq.queryParams("cTemp"); // get value from form
+		double cTemp = 0.0;		
+		try {
+		    cTemp = Double.parseDouble(ctempAsString);
+		    model.put("error","");
+		} catch (NumberFormatException nfe) {
+		    cTemp = 0.0;
+		    model.put("error","Error converting '" + ctempAsString + "' to number; 0.0 used for celsius temp");
+		}
+		double fTemp = TempConversion.ctof(cTemp);
+		model.put("ctemp",Double.toString(cTemp));
+		model.put("ftemp",Double.toString(fTemp));
+		
 		return new ModelAndView(model, "ctof_result.mustache");
 	    },
 	    new MustacheTemplateEngine()

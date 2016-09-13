@@ -84,7 +84,7 @@
 	      <configuration>
 		<transformers>
 		  <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-		    <mainClass>spark.template.mustache.MustacheTemplateExample</mainClass>
+		    <mainClass>org.pconrad.webapps.sparkjava.MustacheTemplateExample</mainClass>
 		  </transformer>
 		</transformers>
 	      </configuration>
