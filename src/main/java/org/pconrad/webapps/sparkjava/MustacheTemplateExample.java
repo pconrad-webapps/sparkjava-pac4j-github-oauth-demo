@@ -33,6 +33,11 @@ import static spark.Spark.get;
 public class MustacheTemplateExample {
     public static void main(String[] args) {
 	Spark.staticFileLocation("/static");
+	try {
+	    Spark.port(Integer.valueOf(System.getenv("PORT"))); // needed for Heroku
+	} catch (Exception e) {
+	    System.err.println("NOTICE: using default port.  Define PORT env variable to override");
+	}
 	final Map nullMap = new HashMap();
 
         get("/", (rq, rs) -> new ModelAndView(nullMap, "home.mustache"), new MustacheTemplateEngine());
