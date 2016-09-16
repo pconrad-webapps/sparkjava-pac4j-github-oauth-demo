@@ -26,3 +26,9 @@ The first step says:
 > All released artifacts are available in the [Maven central repository](http://search.maven.org/#search%7Cga%7C1%7Cpac4j).
 > 
 >
+
+We interpreted this to mean: add the following to the dependencies part of the `pom.xml` file:
+
+```xml
+
+```
