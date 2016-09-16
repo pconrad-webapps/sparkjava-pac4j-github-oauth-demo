@@ -41,3 +41,39 @@ We interpreted this to mean: add the following to the dependencies part of the `
         	<version>1.9.1</version>
         </dependency>
 ```
+
+The next step says:
+
+> ### 2) Define the configuration (`Config` + `Client` + `Authorizer`)
+> 
+> The configuration (`org.pac4j.core.config.Config`) contains all the clients and authorizers required by the application to handle security.
+> 
+> It can be built via a configuration factory (`org.pac4j.core.config.ConfigFactory`) for example:
+>
+> ```java
+> public class DemoConfigFactory implements ConfigFactory {
+> 
+> ```
+
+\[Many lines of java code omitted here.  See <https://github.com/pac4j/spark-pac4j/blob/master/README.md> for full listing \]
+
+> ```java
+>    config.addMatcher("excludedPath", new ExcludedPathMatcher("^/facebook/notprotected$"));
+>    config.setHttpActionAdapter(new DemoHttpActionAdapter(templateEngine));
+>    return config;
+>  }
+> }
+> ```
+
+The instructions go on to say:
+
+> `http://localhost:8080/callback` is the url of the callback endpoint, which is only necessary for indirect clients.
+> 
+> Notice that you can define:
+> 
+> 1) a specific [`SessionStore`](http://www.pac4j.org/docs/session-store.html) using the `setSessionStore(sessionStore)` method (by default, it uses the `J2ESessionStore` which relies on the J2E HTTP session)
+
+> 2) specific [matchers](http://www.pac4j.org/docs/matchers.html) via the `addMatcher(name, Matcher)` method.
+>
+
+TODO: Continue from here.
