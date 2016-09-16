@@ -30,5 +30,14 @@ The first step says:
 We interpreted this to mean: add the following to the dependencies part of the `pom.xml` file:
 
 ```xml
-
+        <dependency>
+        	<groupId>org.pac4j</groupId>
+        	<artifactId>spark-pac4j</artifactId>
+        	<version>1.2.0</version>
+        </dependency>
+        <dependency>
+        	<groupId>org.pac4j</groupId>
+        	<artifactId>pac4j-oauth</artifactId>
+        	<version>1.9.1</version>
+        </dependency>
 ```
