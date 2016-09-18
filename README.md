@@ -198,13 +198,13 @@ Here is what the main "Getting Started" documentation about SparkJava has to say
 > Every request has access to the session created on the server side, provided with the following methods:
 > ```java
 > request.session(true)                      // create and return session
-> request.session().attribute(&quot;user&quot;)        // Get session attribute &#x27;user&#x27;
-> request.session().attribute(&quot;user&quot;, &quot;foo&quot;) // Set session attribute &#x27;user&#x27;
-> request.session().removeAttribute(&quot;user&quot;)  // Remove session attribute &#x27;user&#x27;
+> request.session().attribute("user")        // Get session attribute "user"
+> request.session().attribute("user", "foo") // Set session attribute "user"
+> request.session().removeAttribute("user")  // Remove session attribute "user"
 > request.session().attributes()             // Get all session attributes
 > request.session().id()                     // Get session id
 > request.session().isNew()                  // Check if session is new
-> request.session().raw()                    // Return servlet object</code></pre></div>
+> request.session().raw()                    // Return servlet object
 > ```
 
 This is where we turned to the https://github.com/pac4j/spark-pac4j-demo repo to try to find some patterns for login/logout handling
