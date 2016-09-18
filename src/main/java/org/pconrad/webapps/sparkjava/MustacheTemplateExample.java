@@ -31,18 +31,35 @@ import static spark.Spark.get;
  * @author Sam Pullara https://github.com/spullara
  */
 public class MustacheTemplateExample {
+
     public static void main(String[] args) {
+
+	String GITHUB_CLIENT_ID = System.getenv("GITHUB_CLIENT_ID");
+	String GITHUB_CLIENT_SECRET = System.getenv("GITHUB_CLIENT_SECRET");
+
+	if (GITHUB_CLIENT_ID==null || GITHUB_CLIENT_SECRET==null) {
+	    System.err.println("Warning: need to define GITHUB_CLIENT_ID \n" +
+			       "         and GITHUB_CLIENT_SECRET");
+	    System.exit(1);
+	}
+	
 	Spark.staticFileLocation("/static");
+	
 	try {
-	    Spark.port(Integer.valueOf(System.getenv("PORT"))); // needed for Heroku
+	    // needed for Heroku
+	    Spark.port(Integer.valueOf(System.getenv("PORT"))); 
 	} catch (Exception e) {
-	    System.err.println("NOTICE: using default port.  Define PORT env variable to override");
+	    System.err.println("NOTICE: using default port." +
+			       " Define PORT env variable to override");
 	}
 	final Map nullMap = new HashMap();
 
         get("/", (rq, rs) -> new ModelAndView(nullMap, "home.mustache"), new MustacheTemplateEngine());
 	
+
         get("/ctof", (rq, rs) -> new ModelAndView(nullMap, "ctof.mustache"), new MustacheTemplateEngine());
+
+	get("/login", (rq, rs) -> "login stub; later, redirect to OAuth");
 
 	get("/ctof_result",
 	    (rq, rs) ->
