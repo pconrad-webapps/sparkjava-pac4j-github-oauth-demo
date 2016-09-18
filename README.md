@@ -54,8 +54,26 @@ Let's take each in turn:
     ```java
       get("/login", (rq, rs) -> "login stub; later, redirect to OAuth");    
     ```
+2. For item 2, we'll proceed as with the route for `/login`, adding it as stub route:
 
-TODO: Continue with items 2 and 3.
+    ```java
+      get("/callback", (rq, rs) -> "stub for oauth callback");    
+    ```
+    
+3.  For item 3, 
+    we'll follow the [example of getting environment variables in the Oracle Java documentation](https://docs.oracle.com/javase/tutorial/essential/environment/env.html), 
+    and add this code to the top of the `main` method of `src/main/java/org/pconrad/webapps/sparkjava/MustacheTemplateExample.java`:
+
+    ```java
+    String GITHUB_CLIENT_ID = System.getenv("GITHUB_CLIENT_ID");
+    String GITHUB_CLIENT_SECRET = System.getenv("GITHUB_CLIENT_SECRET");
+
+	if (GITHUB_CLIENT_ID==null || GITHUB_CLIENT_SECRET==null) {
+            System.err.println("Warning: need to define GITHUB_CLIENT_ID \n" +
+                               "         and GITHUB_CLIENT_SECRET");
+            System.exit(1);
+	}
+    ```
 
 # Getting the Pac4J code working.
 
