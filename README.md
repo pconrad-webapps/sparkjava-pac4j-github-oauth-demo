@@ -42,13 +42,16 @@ For now, we'll put both of those things into our app as "stubs" that we'll wire 
 
 Let's take each in turn:
 
-1. We'll add the login button to the nav.mustache template:
+1. We'll add the login button to the `src/main/resources/templates/nav.mustache` template.   We put this as the last item 
+    in the last `<ul>` element, so that it is the rightmost item on the navigation bar.
 
     ```html
-
+        <li><a href="/login">Login</a></li>
     ```
 
     We'll also add a route for `/login`.  Later this will redirect to the OAuth provider.
+    
+    
 
 TODO: Continue with items 2 and 3.
 
