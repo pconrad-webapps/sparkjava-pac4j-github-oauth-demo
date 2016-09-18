@@ -297,6 +297,55 @@ and we change the code for our GitHubClient to use these values:
                              github_client_secret);
 ```
 
+At this point, we also realize that for later stages, we are going to need parameters for `salt` (a random string for cryptographic security of sessions) as well as a reference to the current `TemplateEngine` inside our ConfigFactory.  So we add those now:
+
+```java
+  public GithubOAuthConfigFactory(String github_client_id,
+                                    String github_client_secret,
+                                    String salt,
+                                    TemplateEngine templateEngine) {
+        this.github_client_id = github_client_id;
+        this.github_client_secret = github_client_secret;
+        this.salt = salt;
+	this.templateEngine = templateEngine;
+    }
+```
+
+And we change our code that invokes the factory.  Among other changes, we factor out the `MustacheTemplateEngine` invocations to 
+a single instance that is a private static class variable for the class containing our main, as is done in the [spark-pac4j-demo](https://github.com/pac4j/spark-pac4j-demo)
+
+```java
+   private final static MustacheTemplateEngine templateEngine = new MustacheTemplateEngine();
+   ...
+   public static void main(String[] args) {
+       ...
+       Config config = new
+            GithubOAuthConfigFactory(github_client_id,
+                                     github_client_secret,
+                                     "This_is_random_SALT_seoawefoauew89fu",
+                                     templateEngine).build();
+```
+
+
+At this point, when we run and try to access the `/callback` route, we get the error:
+
+```
+org.pac4j.core.exception.TechnicalException: httpActionAdapter cannot be null
+```
+
+Tracing this back, our diagnosis is that we need the following [line of code from the demo app](https://github.com/pac4j/spark-pac4j-demo/blob/master/src/main/java/org/pac4j/demo/spark/DemoConfigFactory.java#L78) in our ConfigFactory, which we currently do not have:
+
+```java
+        config.setHttpActionAdapter(new DemoHttpActionAdapter(templateEngine));
+```
+
+And that suggests we need a new class, similar to the [DemoHttpActionAdapter.java from the sparkpac4j demo](https://github.com/pac4j/spark-pac4j-demo/blob/master/src/main/java/org/pac4j/demo/spark/DemoHttpActionAdapter.java).
+
+Since we don't yet entirely understand what this class does, we take the class "as is", changing only the package name for now.
+
+We do understand it well enough, though to know that it depends on having two templates called `error401.mustache` and `error403.mustache`, so we copy those into our
+templates folder from the examples in the [spark-pac4j-demo](https://github.com/pac4j/spark-pac4j-dem) repo, here: [error401.mustache](https://github.com/pac4j/spark-pac4j-demo/blob/master/src/main/resources/templates/error401.mustache) and [error403.mustache](https://github.com/pac4j/spark-pac4j-demo/blob/master/src/main/resources/templates/error403.mustache).
+
 
 > 2) specific [matchers](http://www.pac4j.org/docs/matchers.html) via the `addMatcher(name, Matcher)` method.
 >
