@@ -161,17 +161,37 @@ public class GithubOAuthConfigFactory implements ConfigFactory {
 }
 ```
 
-There is obviously still more work to do to get this run.
+There is obviously still more work to do to get this to run, but at least this compiled.
 
 The instructions for step 2 go on to say:
 
 > `http://localhost:8080/callback` is the url of the callback endpoint, which is only necessary for indirect clients.
 > 
+
+Fair enough: we've got that taken care of, at least at the level of putting in a stub.
+
 > Notice that you can define:
 > 
 > 1) a specific [`SessionStore`](http://www.pac4j.org/docs/session-store.html) using the `setSessionStore(sessionStore)` method (by default, it uses the `J2ESessionStore` which relies on the J2E HTTP session)
 
+
+So this refers to the fact that we now need to start thinking about sessions.   Typically, what happens is that in the `/callback` route, we are getting some signal from the OAuth provider as to whether the user was successfully logged in, and if they were, we get
+some information about that user.  We can then information about the user to to the session; this might include:
+* a flag indicating that we are, in fact logged in (e.g. `logged_in = "true"`), 
+* the user's userid, e.g. `userid = "cgaucho"`
+* the user's real name, e.g. `name = "Chris Gaucho"`
+* etc.
+
+By contrast, if/when we get an error message, we do something to "wipe out" all values in the current session, essentially returning
+us to a "logged out" state.    
+
+We might also add some code in our template that toggles between a `Login` or a `Logout` button depending on whether the session's `logged_in` value is currently `true` or `false`.
+
+So, all of that suggests we need to learn a bit about how Sessions are handled in SparkJava before we proceed.    
+
+
 > 2) specific [matchers](http://www.pac4j.org/docs/matchers.html) via the `addMatcher(name, Matcher)` method.
 >
+
 
 TODO: Continue from here.
