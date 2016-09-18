@@ -1,4 +1,4 @@
-# sparkjava-bootstrap-demo
+# sparkjava-pac4j-demo
 
 WORK IN PROGRESS: Minimal demo of SparkJava with Pac4J.
 
@@ -51,7 +51,9 @@ Let's take each in turn:
 
     We'll also add a route for `/login`.  Later this will redirect to the OAuth provider.
     
-    
+    ```java
+      get("/login", (rq, rs) -> "login stub; later, redirect to OAuth");    
+    ```
 
 TODO: Continue with items 2 and 3.
 
