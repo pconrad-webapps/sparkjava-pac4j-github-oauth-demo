@@ -14,6 +14,48 @@ To run, use `java -jar target/spark-template-mustache-2.4-SNAPSHOT.jar`
 
 We followed the instructions here: https://github.com/pac4j/spark-pac4j
 
+Although those instructions are helpful, they are far from a "complete" tutorial of all the things you need to get OAuth working with a Spark Java webapp.     There is a lot of knowledge about OAuth that they "assume" the programmer already has.    With some background in getting OAuth working in other languages, I attempted to see if I could do the leg work to fill in the missing steps.  What follows is an account of my progress.   
+
+# Preliminaries for OAuth
+
+First, before we even get started, we know we are going to need three things in our Spark Java app, three things that you always need to get OAuth working:
+
+1.  A "login" button or link in your app.  This is the place that when the user clicks or selects, you redirect the user to the other 
+    website (e.g. Github, Facebook, Google, Twitter, etc.) to enter their login information (if they are not already logged in
+    to the OAuth provider), and to
+    authorize the App requesting OAuth to access the user's profile on the OAuth Provider (e.g. the Github profile, Facebook profile, 
+    etc.)
+
+2.  A route for the "callback url".  This is the route in the application that the OAuth provider returns the user to after
+    authenticating.    It is typically something such as `http://localhost:5432:/callback` or `http://sparkjava-pac4j-demo.herokuapp.com/callback`.    It could also be something such as  `http://localhost:5432:/callback/oauth/github`.   
+
+3.  For running on Heroku: A way to get the GITHUB_CLIENT_ID and GITHUB_CLIENT_SECRET out of environment variables into to the
+    application.    
+
+    If you are new to OAuth: these values are numbers that you get from Github when you register a new
+    web application that uses OAuth authentication (e.g. at [this page](https://github.com/settings/applications/new)).   You 
+    typically need to do this once for running on localhost, and a second time if/when you run on a cloud provider such as Heroku,
+    or a "real" web server.     You have to do this separately each time the callback url changes, since these values are typically tied to
+    a single specific callback URL.
+
+For now, we'll put both of those things into our app as "stubs" that we'll wire up to the rest of the OAuth stuff later.
+
+Let's take each in turn:
+
+1. We'll add the login button to the nav.mustache template:
+
+    ```html
+
+    ```
+
+    We'll also add a route for `/login`.  Later this will redirect to the OAuth provider.
+
+TODO: Continue with items 2 and 3.
+
+# Getting the Pac4J code working.
+
+Returning now to https://github.com/pac4j/spark-pac4j
+
 The first step says:
 
 > ### 1) Add the required dependencies (`spark-pac4j` + `pac4j-*` libraries)
