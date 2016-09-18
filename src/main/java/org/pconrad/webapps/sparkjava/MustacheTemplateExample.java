@@ -18,6 +18,7 @@ package org.pconrad.webapps.sparkjava;
 
 import java.util.HashMap;
 import java.util.Map;
+import static java.util.Map.Entry;
 
 import spark.ModelAndView;
 
@@ -27,9 +28,16 @@ import static spark.Spark.get;
 import static spark.Spark.post;
 import static spark.Spark.before;
 
+import spark.Request;
+import spark.Response;
+
 import org.pac4j.core.config.Config;
 import org.pac4j.sparkjava.SecurityFilter;
+import org.pac4j.sparkjava.ApplicationLogoutRoute;
 
+import org.pac4j.core.profile.CommonProfile;
+import org.pac4j.core.profile.ProfileManager;
+import org.pac4j.sparkjava.SparkWebContext;
 
 /**
  * Mustache template engine example
@@ -38,11 +46,54 @@ import org.pac4j.sparkjava.SecurityFilter;
  */
 public class MustacheTemplateExample {
 
+
+    private static java.util.List<CommonProfile> getProfiles(final Request request,
+						   final Response response) {
+	final SparkWebContext context = new SparkWebContext(request, response);
+	final ProfileManager manager = new ProfileManager(context);
+	return manager.getAll(true);
+    }
+    
+    
     private final static MustacheTemplateEngine templateEngine = new MustacheTemplateEngine();
 
-    public static void main(String[] args) {
+    private static Map buildModel(Request request, Response response) {
 
+	final Map model = new HashMap<String,Object>();
 	
+	Map<String, Object> map = new HashMap<String, Object>();
+	for (String k: request.session().attributes()) {
+	    Object v = request.session().attribute(k);
+	    map.put(k,v);
+	}
+	
+	model.put("session", map.entrySet());
+
+	java.util.List<CommonProfile> userProfiles = getProfiles(request,response);
+
+	map.put("profiles", userProfiles);
+
+	try {
+	    if (userProfiles.size()>0) {
+		CommonProfile firstProfile = userProfiles.get(0);
+		map.put("firstProfile", firstProfile);	
+		
+		org.pac4j.oauth.profile.github.GitHubProfile ghp = 
+		    (org.pac4j.oauth.profile.github.GitHubProfile) firstProfile;
+		
+		model.put("userid",ghp.getUsername());
+		model.put("name",ghp.getDisplayName());
+		model.put("avatar_url",ghp.getPictureUrl());
+		model.put("email",ghp.getEmail());
+	    }
+	} catch (Exception e) {
+	    e.printStackTrace();
+	}
+	
+	return model;	
+    }
+    
+    public static void main(String[] args) {
 
 	String github_client_id = System.getenv("GITHUB_CLIENT_ID");
 	String github_client_secret = System.getenv("GITHUB_CLIENT_SECRET");
@@ -62,14 +113,6 @@ public class MustacheTemplateExample {
 	    System.err.println("NOTICE: using default port." +
 			       " Define PORT env variable to override");
 	}
-	final Map nullMap = new HashMap();
-
-        get("/", (rq, rs) -> new ModelAndView(nullMap, "home.mustache"), templateEngine);
-	
-
-        get("/ctof", (rq, rs) -> new ModelAndView(nullMap, "ctof.mustache"), templateEngine);
-
-
 
 	Config config = new
 	    GithubOAuthConfigFactory(github_client_id,
@@ -80,40 +123,27 @@ public class MustacheTemplateExample {
 	final SecurityFilter
 	    githubFilter = new SecurityFilter(config, "GithubClient", "", "");
 
-	before("/login", githubFilter);
-	
-	get("/login", (rq, rs) -> "login stub; later, redirect to OAuth");
+	get("/",
+	    (request, response) -> new ModelAndView(buildModel(request,response),"home.mustache"),
+	    templateEngine);
 
+	before("/login", githubFilter);
+
+	get("/login",
+	    (request, response) -> new ModelAndView(buildModel(request,response),"home.mustache"),
+	    templateEngine);
+
+	get("/logout", new ApplicationLogoutRoute(config, "/"));
+	
+	get("/session",
+	    (request, response) -> new ModelAndView(buildModel(request,response),"session.mustache"),
+	    templateEngine);
 	
 	final org.pac4j.sparkjava.CallbackRoute callback =
 	    new org.pac4j.sparkjava.CallbackRoute(config);
+
 	get("/callback", callback);
 	post("/callback", callback);
-	
-
-	
-	get("/ctof_result",
-	    (rq, rs) ->
-	    {
-		Map model = new HashMap();
-		String ctempAsString = rq.queryParams("cTemp"); // get value from form
-		double cTemp = 0.0;		
-		try {
-		    cTemp = Double.parseDouble(ctempAsString);
-		    model.put("error","");
-		} catch (NumberFormatException nfe) {
-		    cTemp = 0.0;
-		    model.put("error","Error converting '" + ctempAsString + "' to number; 0.0 used for celsius temp");
-		}
-		double fTemp = TempConversion.ctof(cTemp);
-		model.put("ctemp",Double.toString(cTemp));
-		model.put("ftemp",Double.toString(fTemp));
-		
-		return new ModelAndView(model, "ctof_result.mustache");
-	    },
-	    templateEngine
-	    );
-	
 
     }
 }

@@ -1,0 +1,27 @@
+<!DOCTYPE html>  <!-- -*- mode: html -*- -->
+<html>
+{{>head}}
+<title></title>
+<body>
+{{>nav}}
+
+<h1>Session contents</h1>
+
+
+<ul>
+  {{#session}}
+  <li>{{key}} = {{value}} </li>
+  </li>
+  {{/session}}
+</ul>
+
+<dl>
+  <dt>userid</dt> <dd>{{userid}}</dd>
+  <dt>name</dt> <dd>{{name}}</dd>
+  <dt>avatar_url</dt> <dd>{{avatar_url}}</dd>
+  <dt>email</dt> <dd>{{email}}</dd>
+</dl>
+
+{{>footer}}
+</body>
+</html>
