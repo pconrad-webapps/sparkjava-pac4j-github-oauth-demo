@@ -24,6 +24,9 @@ import spark.ModelAndView;
 import spark.Spark;
 
 import static spark.Spark.get;
+import static spark.Spark.post;
+
+import org.pac4j.core.config.Config;
 
 /**
  * Mustache template engine example
@@ -32,12 +35,16 @@ import static spark.Spark.get;
  */
 public class MustacheTemplateExample {
 
+    private final static MustacheTemplateEngine templateEngine = new MustacheTemplateEngine();
+
     public static void main(String[] args) {
 
-	String GITHUB_CLIENT_ID = System.getenv("GITHUB_CLIENT_ID");
-	String GITHUB_CLIENT_SECRET = System.getenv("GITHUB_CLIENT_SECRET");
+	
 
-	if (GITHUB_CLIENT_ID==null || GITHUB_CLIENT_SECRET==null) {
+	String github_client_id = System.getenv("GITHUB_CLIENT_ID");
+	String github_client_secret = System.getenv("GITHUB_CLIENT_SECRET");
+
+	if (github_client_id==null || github_client_secret==null) {
 	    System.err.println("Warning: need to define GITHUB_CLIENT_ID \n" +
 			       "         and GITHUB_CLIENT_SECRET");
 	    System.exit(1);
@@ -54,13 +61,26 @@ public class MustacheTemplateExample {
 	}
 	final Map nullMap = new HashMap();
 
-        get("/", (rq, rs) -> new ModelAndView(nullMap, "home.mustache"), new MustacheTemplateEngine());
+        get("/", (rq, rs) -> new ModelAndView(nullMap, "home.mustache"), templateEngine);
 	
 
-        get("/ctof", (rq, rs) -> new ModelAndView(nullMap, "ctof.mustache"), new MustacheTemplateEngine());
+        get("/ctof", (rq, rs) -> new ModelAndView(nullMap, "ctof.mustache"), templateEngine);
 
 	get("/login", (rq, rs) -> "login stub; later, redirect to OAuth");
 
+	Config config = new
+	    GithubOAuthConfigFactory(github_client_id,
+				     github_client_secret,
+				     "This_is_random_SALT_seoawefoauew89fu",
+				     templateEngine).build();
+	    
+	final org.pac4j.sparkjava.CallbackRoute callback =
+	    new org.pac4j.sparkjava.CallbackRoute(config);
+	get("/callback", callback);
+	post("/callback", callback);
+	
+
+	
 	get("/ctof_result",
 	    (rq, rs) ->
 	    {
@@ -80,7 +100,7 @@ public class MustacheTemplateExample {
 		
 		return new ModelAndView(model, "ctof_result.mustache");
 	    },
-	    new MustacheTemplateEngine()
+	    templateEngine
 	    );
 	
 
