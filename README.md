@@ -207,7 +207,69 @@ Here is what the main "Getting Started" documentation about SparkJava has to say
 > request.session().raw()                    // Return servlet object</code></pre></div>
 > ```
 
-It is not entirely clear, but it appears that perhaps calling `request.session(true)` might result in destroying the old session and resetting it.   
+This is where we turned to the https://github.com/pac4j/spark-pac4j-demo repo to try to find some patterns for login/logout handling
+of sessions that might help provide us with some guidance.
+
+One of the things we found is that [lines 45-47 of src/main/java/org/pac4j/demo/spark/SparkPac4jDemo.java] ](https://github.com/pac4j/spark-pac4j-demo/blob/master/src/main/java/org/pac4j/demo/spark/SparkPac4jDemo.java#L46) read as follows:
+
+```java
+		final CallbackRoute callback = new CallbackRoute(config, null, true);
+		get("/callback", callback);
+		post("/callback", callback);
+```
+
+Looking into what `CallbackRoute` is, we find this import at [line 19 ](https://github.com/pac4j/spark-pac4j-demo/blob/master/src/main/java/org/pac4j/demo/spark/SparkPac4jDemo.java#L19):
+
+```java
+import org.pac4j.sparkjava.CallbackRoute;
+```
+
+Looking into the [Javadoc for the CallbackRoute object class](http://static.javadoc.io/org.pac4j/spark-pac4j/1.2.0/org/pac4j/sparkjava/CallbackRoute.html), we find this:
+
+> This route finishes the login process for an indirect client, based on the [callbackLogic](http://static.javadoc.io/org.pac4j/spark-pac4j/1.2.0/org/pac4j/sparkjava/CallbackRoute.html#callbackLogic).
+>
+> The configuration can be provided via the following parameters: config (security configuration), defaultUrl (default url after login if none was requested), multiProfile (whether multiple profiles should be kept) and renewSession (whether the session must be renewed after login).
+
+This answers at least one question: how do we ensure that the session gets renewed after login?   The answer is: we pass `true` into the `renewSession` parameter of the constructor for the `CallbackRoute` constructor.   The prototypes for that constructor are these, according to the [spark-pac4j javadoc](http://static.javadoc.io/org.pac4j/spark-pac4j/1.2.0/org/pac4j/sparkjava/CallbackRoute.html):
+
+```java
+CallbackRoute(org.pac4j.core.config.Config config) 
+CallbackRoute(org.pac4j.core.config.Config config, String defaultUrl) 
+CallbackRoute(org.pac4j.core.config.Config config, String defaultUrl, Boolean multiProfile) 
+CallbackRoute(org.pac4j.core.config.Config config, String defaultUrl, Boolean multiProfile, Boolean renewSession) 
+```
+
+and we see an example of invoking it at [line 45 of the spark-pac4j demo](https://github.com/pac4j/spark-pac4j-demo/blob/master/src/main/java/org/pac4j/demo/spark/SparkPac4jDemo.java#L45):
+
+```java 
+		final CallbackRoute callback = new CallbackRoute(config, null, true);
+```
+
+It appears, however that this in this case, the invocation of the `CallbackRoute` constructor is passing `true` for `multiProfile`, and is not passing anything for `renewSession`.    The documentation are not clear about whether `renewSession` defaults to `true` or `false` when it is not passed.     
+
+We don't have to guess, however, since [we have the source code here](https://github.com/pac4j/spark-pac4j/blob/master/src/main/java/org/pac4j/sparkjava/CallbackRoute.java).  And it would appear, looking at that file that the default value is `null` (since this is a `Boolean`, not a `bool`, that actually makes sense.)
+
+Looking further into the source code, and tracing things super deep, first from the spark-pac4j code back over to the pac4j package itself, we finally land at [these lines of code, lines 55-59 of DefaultCallbackLogic.java](https://github.com/pac4j/pac4j/blob/master/pac4j-core/src/main/java/org/pac4j/core/engine/DefaultCallbackLogic.java#L55):
+
+```java
+      if (inputRenewSession == null) {
+            renewSession = true;
+        } else {
+            renewSession = inputRenewSession;
+        }
+```
+
+With that mystery cleared up, we now can (sort of) safely rest knowing that by default, sessions are renewed when the callback is performed.
+
+And, that possibly the line of code we want for our callback is this one, i.e. one that takes the defaults for everything except the
+config, which already have:
+
+```
+	final org.pac4j.sparkjava.CallbackRoute callback = 
+		new org.pac4j.sparkjava.CallbackRoute(config);
+	get("/callback", callback);
+	post("/callback", callback);
+```
 
 
 > 2) specific [matchers](http://www.pac4j.org/docs/matchers.html) via the `addMatcher(name, Matcher)` method.
