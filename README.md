@@ -14,7 +14,11 @@ To run, use `java -jar target/spark-template-mustache-2.4-SNAPSHOT.jar`
 
 We followed the instructions here: https://github.com/pac4j/spark-pac4j
 
-Although those instructions are helpful, they are far from a "complete" tutorial of all the things you need to get OAuth working with a Spark Java webapp.     There is a lot of knowledge about OAuth that they "assume" the programmer already has.    With some background in getting OAuth working in other languages, I attempted to see if I could do the leg work to fill in the missing steps.  What follows is an account of my progress.   
+Although those instructions are helpful, they are far from a "complete" tutorial of all the things you need to get OAuth working with a Spark Java webapp.  
+
+Half way through, we also found this repo, which fill is some of the gaps: https://github.com/pac4j/spark-pac4j-demo
+
+Even with both of those tutorials, though, they are far from a "complete" tutorial of all the things you need to get OAuth working with a Spark Java webapp.     There is a lot of knowledge about OAuth that they "assume" the programmer already has.    With some background in getting OAuth working in other languages, I attempted to see if I could do the leg work to fill in the missing steps.  What follows is an account of my progress.   
 
 # Preliminaries for OAuth
 
@@ -188,6 +192,22 @@ us to a "logged out" state.
 We might also add some code in our template that toggles between a `Login` or a `Logout` button depending on whether the session's `logged_in` value is currently `true` or `false`.
 
 So, all of that suggests we need to learn a bit about how Sessions are handled in SparkJava before we proceed.    
+
+Here is what the main "Getting Started" documentation about SparkJava has to say about Sessions.   We can also access the [javadoc for the Session object](http://spark.screenisland.com/spark/Session.html)
+
+> Every request has access to the session created on the server side, provided with the following methods:
+> ```java
+> request.session(true)                      // create and return session
+> request.session().attribute(&quot;user&quot;)        // Get session attribute &#x27;user&#x27;
+> request.session().attribute(&quot;user&quot;, &quot;foo&quot;) // Set session attribute &#x27;user&#x27;
+> request.session().removeAttribute(&quot;user&quot;)  // Remove session attribute &#x27;user&#x27;
+> request.session().attributes()             // Get all session attributes
+> request.session().id()                     // Get session id
+> request.session().isNew()                  // Check if session is new
+> request.session().raw()                    // Return servlet object</code></pre></div>
+> ```
+
+It is not entirely clear, but it appears that perhaps calling `request.session(true)` might result in destroying the old session and resetting it.   
 
 
 > 2) specific [matchers](http://www.pac4j.org/docs/matchers.html) via the `addMatcher(name, Matcher)` method.
