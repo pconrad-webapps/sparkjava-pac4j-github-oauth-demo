@@ -265,10 +265,36 @@ And, that possibly the line of code we want for our callback is this one, i.e. o
 config, which already have:
 
 ```
-	final org.pac4j.sparkjava.CallbackRoute callback = 
-		new org.pac4j.sparkjava.CallbackRoute(config);
-	get("/callback", callback);
-	post("/callback", callback);
+        Config config = new
+            GithubOAuthConfigFactory(github_client_id,
+                                     github_client_secret).build();
+
+        final org.pac4j.sparkjava.CallbackRoute callback =
+            new org.pac4j.sparkjava.CallbackRoute(config);
+        get("/callback", callback);
+        post("/callback", callback);
+```
+
+Of course, for this, we need a config.  That comes from the `GithubOAuthConfigFactory`, to which we now add attributes
+for the `github_client_id` and `github_client_secret`, which have to get passed into the constructor:
+
+```java
+   private String github_client_id;
+    private String github_client_secret;
+
+    public GithubOAuthConfigFactory(String github_client_id,
+                             String github_client_secret) {
+        this.github_client_id = github_client_id;
+        this.github_client_secret = github_client_secret;
+    }
+```
+
+and we change the code for our GitHubClient to use these values:
+
+```java
+   GitHubClient githubClient =
+            new GitHubClient(github_client_id,
+                             github_client_secret);
 ```
 
 
