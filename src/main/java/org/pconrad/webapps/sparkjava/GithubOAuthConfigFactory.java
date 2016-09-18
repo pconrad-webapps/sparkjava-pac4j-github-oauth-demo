@@ -38,9 +38,12 @@ public class GithubOAuthConfigFactory implements ConfigFactory {
 	    new GitHubClient(github_client_id,
 			     github_client_secret);
 	
-	Clients clients = new Clients("http://localhost:8080/callback", githubClient);
+	Clients clients = new Clients("http://localhost:4567/callback", githubClient);
 	
 	org.pac4j.core.config.Config config = new org.pac4j.core.config.Config(clients); // placeholder stub
+
+	config.setHttpActionAdapter(new DemoHttpActionAdapter(templateEngine));
+	
 	return config;
     }
 }

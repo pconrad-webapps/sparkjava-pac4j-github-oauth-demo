@@ -25,8 +25,11 @@ import spark.Spark;
 
 import static spark.Spark.get;
 import static spark.Spark.post;
+import static spark.Spark.before;
 
 import org.pac4j.core.config.Config;
+import org.pac4j.sparkjava.SecurityFilter;
+
 
 /**
  * Mustache template engine example
@@ -66,14 +69,22 @@ public class MustacheTemplateExample {
 
         get("/ctof", (rq, rs) -> new ModelAndView(nullMap, "ctof.mustache"), templateEngine);
 
-	get("/login", (rq, rs) -> "login stub; later, redirect to OAuth");
+
 
 	Config config = new
 	    GithubOAuthConfigFactory(github_client_id,
 				     github_client_secret,
 				     "This_is_random_SALT_seoawefoauew89fu",
 				     templateEngine).build();
-	    
+
+	final SecurityFilter
+	    githubFilter = new SecurityFilter(config, "GithubClient", "", "");
+
+	before("/login", githubFilter);
+	
+	get("/login", (rq, rs) -> "login stub; later, redirect to OAuth");
+
+	
 	final org.pac4j.sparkjava.CallbackRoute callback =
 	    new org.pac4j.sparkjava.CallbackRoute(config);
 	get("/callback", callback);
