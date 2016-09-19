@@ -1,6 +1,6 @@
-# sparkjava-pac4j-demo
+# sparkjava-pac4j-github-oauth-demo
 
-WORK IN PROGRESS: Minimal demo of SparkJava with Pac4J.
+WORK IN PROGRESS: Minimal demo of SparkJava with Pac4J doing Github OAuth
 
 Also uses mustache templating and a bootstrap based UI.
 
@@ -8,17 +8,17 @@ Requires Java 1.8, and Maven (`mvn` command)
 
 To build, use `mvn package`
 
-To run, use `java -jar target/spark-template-mustache-2.4-SNAPSHOT.jar`
+To run, use `java -jar target/sparkjava-pac4j-demo-1.0.jar 
 
 # References:
 
-We followed the instructions here: https://github.com/pac4j/spark-pac4j
+Some helpful references can be found here:
 
-Although those instructions are helpful, they are far from a "complete" tutorial of all the things you need to get OAuth working with a Spark Java webapp.  
-
-Half way through, we also found this repo, which fill is some of the gaps: https://github.com/pac4j/spark-pac4j-demo
-
-Even with both of those tutorials, though, they are far from a "complete" tutorial of all the things you need to get OAuth working with a Spark Java webapp.     There is a lot of knowledge about OAuth that they "assume" the programmer already has.    With some background in getting OAuth working in other languages, I attempted to see if I could do the leg work to fill in the missing steps.  What follows is an account of my progress.   
+* https://github.com/pac4j/spark-pac4j
+* https://github.com/pac4j/spark-pac4j-demo
+ 
+That documentation though leaves a lot of things out that you might need to know to work with OAuth.  Here are some of the missing
+pieces.
 
 # Preliminaries for OAuth
 
@@ -26,8 +26,7 @@ First, before we even get started, we know we are going to need three things in 
 
 1.  A "login" button or link in your app.  This is the place that when the user clicks or selects, you redirect the user to the other 
     website (e.g. Github, Facebook, Google, Twitter, etc.) to enter their login information (if they are not already logged in
-    to the OAuth provider), and to
-    authorize the App requesting OAuth to access the user's profile on the OAuth Provider (e.g. the Github profile, Facebook profile, 
+    to the OAuth provider), and to authorize the App requesting OAuth to access the user's profile on the OAuth Provider (e.g. the Github profile, Facebook profile, 
     etc.)
 
 2.  A route for the "callback url".  This is the route in the application that the OAuth provider returns the user to after
@@ -42,46 +41,80 @@ First, before we even get started, we know we are going to need three things in 
     or a "real" web server.     You have to do this separately each time the callback url changes, since these values are typically tied to
     a single specific callback URL.
 
-For now, we'll put both of those things into our app as "stubs" that we'll wire up to the rest of the OAuth stuff later.
 
 Let's take each in turn:
 
 1. We'll add the login button to the `src/main/resources/templates/nav.mustache` template.   We put this as the last item 
-    in the last `<ul>` element, so that it is the rightmost item on the navigation bar.
+    in the last `<ul>` element, so that it is the rightmost item on the navigation bar.     We've wrapped this in some code
+    so that it toggles between being a Login and a Logout button.   When the value `userid` is defined in the `model` object
+    passed to the template, then we see a `Logout` button; otherwise we see a `Login` button.   What you see below is the
+    mustache template syntax for something like an `if`/`else`:
 
     ```html
-        <li><a href="/login">Login</a></li>
+    <ul class="nav navbar-nav navbar-right">
+
+	{{#userid}} 
+	<li><a href="/logout">Logout</a></li>
+	{{/userid}}
+
+	{{^userid}}
+	<li><a href="/login">Login</a></li>
+	{{/userid}}
+
+    </ul>
     ```
 
-    We'll also add a route for `/login`.  Later this will redirect to the OAuth provider.
+    We'll also add a routes for `/login` and `/logout`.   Here's what those look like, inside the
+    main java file for our webapp, namely [src/main/java/org/pconrad/webapps/sparkjava/SparkPac4jGithubOAuthDemo.java](https://github.com/pconrad-webapps/sparkjava-pac4j-github-oauth-demo/blob/master/src/main/java/org/pconrad/webapps/sparkjava/SparkPac4jGithubOAuthDemo.java):
+   
+    What these routes essentially mean is: 
+    
+        * before you login, run the `githubFilter`, which tries to login to Github.
+        * when you are logged in, just to to the home page (the content of `"home.mustache"`)
+        * when you logout, call the special magic method `ApplicationLogoutRoute` which destroys all the
+            values in the session, and redirects you to some page, in this case to the page at the url `"/"`
     
     ```java
-      get("/login", (rq, rs) -> "login stub; later, redirect to OAuth");    
-    ```
-2. For item 2, we'll proceed as with the route for `/login`, adding it as stub route:
+        final SecurityFilter githubFilter = new SecurityFilter(config, "GithubClient", "", "");
+       
+        before("/login", githubFilter);
 
-    ```java
-      get("/callback", (rq, rs) -> "stub for oauth callback");    
+	get("/login",
+	    (request, response) -> new ModelAndView(buildModel(request,response),"home.mustache"),
+	    templateEngine);
+
+	get("/logout", new ApplicationLogoutRoute(config, "/"));
     ```
     
-3.  For item 3, 
-    we'll follow the [example of getting environment variables in the Oracle Java documentation](https://docs.oracle.com/javase/tutorial/essential/environment/env.html), 
-    and add this code to the top of the `main` method of `src/main/java/org/pconrad/webapps/sparkjava/MustacheTemplateExample.java`:
+    2. For item 2, we define the `/callback` route as follows.  This is just boilerplate pac4j code:
 
     ```java
-    String GITHUB_CLIENT_ID = System.getenv("GITHUB_CLIENT_ID");
-    String GITHUB_CLIENT_SECRET = System.getenv("GITHUB_CLIENT_SECRET");
+       final org.pac4j.sparkjava.CallbackRoute callback =
+	    new org.pac4j.sparkjava.CallbackRoute(config);
 
-	if (GITHUB_CLIENT_ID==null || GITHUB_CLIENT_SECRET==null) {
-            System.err.println("Warning: need to define GITHUB_CLIENT_ID \n" +
-                               "         and GITHUB_CLIENT_SECRET");
-            System.exit(1);
-	}
+	get("/callback", callback);
+	post("/callback", callback);
+    ```
+    
+3.  For item 3, we've followed
+     the [example of getting environment variables in the Oracle Java documentation](https://docs.oracle.com/javase/tutorial/essential/environment/env.html), 
+     and then added a bit of extra code to abstract this.     After calling this method, we can
+     be assured that if any of the needed env vars were not defined, an error message was printed,
+     and the web server halted.  So we can now just access them via, for example,
+     `envVars.get("GITHUB_CLIENT_ID")`
+     
+    ```java
+        HashMap<String,String> envVars =
+	    getNeededEnvVars(new String []{ "GITHUB_CLIENT_ID",
+					    "GITHUB_CLIENT_SECRET",
+					    "GITHUB_CALLBACK_URL",
+					    "APPLICATION_SALT"});
+    
     ```
 
-# Getting the Pac4J code working.
+# What we had to add to the `pom.xml`
 
-Returning now to https://github.com/pac4j/spark-pac4j
+In https://github.com/pac4j/spark-pac4j
 
 The first step says:
 
@@ -111,75 +144,9 @@ We interpreted this to mean: add the following to the dependencies part of the `
         </dependency>
 ```
 
-The next step says:
+# Sessions
 
-> ### 2) Define the configuration (`Config` + `Client` + `Authorizer`)
-> 
-> The configuration (`org.pac4j.core.config.Config`) contains all the clients and authorizers required by the application to handle security.
-> 
-> It can be built via a configuration factory (`org.pac4j.core.config.ConfigFactory`) for example:
->
-> ```java
-> public class DemoConfigFactory implements ConfigFactory {
-> 
-> ```
-
-\[Many lines of java code omitted here.  See <https://github.com/pac4j/spark-pac4j/blob/master/README.md> for full listing \]
-
-> ```java
->    config.addMatcher("excludedPath", new ExcludedPathMatcher("^/facebook/notprotected$"));
->    config.setHttpActionAdapter(new DemoHttpActionAdapter(templateEngine));
->    return config;
->  }
-> }
-> ```
-
-We interpreted this to mean: implement a class just like this one, called for example, `GithubOAuthConfigFactory`, given that we are only interested in implementing Github OAuth in our demo.
-
-In our application, we put this into  `package org.pconrad.webapps.sparkjava`.
-
-The first step was to try to infer the missing import statements, and get something that would at least minimally compile (getting it to work is a later stage!)  Here is what we came up with.  This does, at a minimum, compile:
-
-```java
-package org.pconrad.webapps.sparkjava;
-
-import org.pac4j.core.config.ConfigFactory;
-import org.pac4j.core.config.Config;
-import org.pac4j.core.client.Clients;
-
-import org.pac4j.oauth.client.GitHubClient;
-// See: https://github.com/pac4j/pac4j/blob/master/pac4j-oauth/src/main/java/org/pac4j/oauth/client/GitHubClient.java
-
-
-
-public class GithubOAuthConfigFactory implements ConfigFactory {
-
-  public org.pac4j.core.config.Config build() {
-      
-      GitHubClient githubClient = new GitHubClient("ghid-goes-here", "gh-secret-goes-here");
-      Clients clients = new Clients("http://localhost:8080/callback", githubClient);
-      
-      org.pac4j.core.config.Config config = new org.pac4j.core.config.Config(clients); // placeholder stub
-      return config;
-  }
-}
-```
-
-There is obviously still more work to do to get this to run, but at least this compiled.
-
-The instructions for step 2 go on to say:
-
-> `http://localhost:8080/callback` is the url of the callback endpoint, which is only necessary for indirect clients.
-> 
-
-Fair enough: we've got that taken care of, at least at the level of putting in a stub.
-
-> Notice that you can define:
-> 
-> 1) a specific [`SessionStore`](http://www.pac4j.org/docs/session-store.html) using the `setSessionStore(sessionStore)` method (by default, it uses the `J2ESessionStore` which relies on the J2E HTTP session)
-
-
-So this refers to the fact that we now need to start thinking about sessions.   Typically, what happens is that in the `/callback` route, we are getting some signal from the OAuth provider as to whether the user was successfully logged in, and if they were, we get
+So when doing OAuth, we now need to start thinking about sessions.   Typically, what happens is that in the `/callback` route, we are getting some signal from the OAuth provider as to whether the user was successfully logged in, and if they were, we get
 some information about that user.  We can then information about the user to to the session; this might include:
 * a flag indicating that we are, in fact logged in (e.g. `logged_in = "true"`), 
 * the user's userid, e.g. `userid = "cgaucho"`
@@ -207,148 +174,3 @@ Here is what the main "Getting Started" documentation about SparkJava has to say
 > request.session().raw()                    // Return servlet object
 > ```
 
-This is where we turned to the https://github.com/pac4j/spark-pac4j-demo repo to try to find some patterns for login/logout handling
-of sessions that might help provide us with some guidance.
-
-One of the things we found is that [lines 45-47 of src/main/java/org/pac4j/demo/spark/SparkPac4jDemo.java] ](https://github.com/pac4j/spark-pac4j-demo/blob/master/src/main/java/org/pac4j/demo/spark/SparkPac4jDemo.java#L46) read as follows:
-
-```java
-		final CallbackRoute callback = new CallbackRoute(config, null, true);
-		get("/callback", callback);
-		post("/callback", callback);
-```
-
-Looking into what `CallbackRoute` is, we find this import at [line 19 ](https://github.com/pac4j/spark-pac4j-demo/blob/master/src/main/java/org/pac4j/demo/spark/SparkPac4jDemo.java#L19):
-
-```java
-import org.pac4j.sparkjava.CallbackRoute;
-```
-
-Looking into the [Javadoc for the CallbackRoute object class](http://static.javadoc.io/org.pac4j/spark-pac4j/1.2.0/org/pac4j/sparkjava/CallbackRoute.html), we find this:
-
-> This route finishes the login process for an indirect client, based on the [callbackLogic](http://static.javadoc.io/org.pac4j/spark-pac4j/1.2.0/org/pac4j/sparkjava/CallbackRoute.html#callbackLogic).
->
-> The configuration can be provided via the following parameters: config (security configuration), defaultUrl (default url after login if none was requested), multiProfile (whether multiple profiles should be kept) and renewSession (whether the session must be renewed after login).
-
-This answers at least one question: how do we ensure that the session gets renewed after login?   The answer is: we pass `true` into the `renewSession` parameter of the constructor for the `CallbackRoute` constructor.   The prototypes for that constructor are these, according to the [spark-pac4j javadoc](http://static.javadoc.io/org.pac4j/spark-pac4j/1.2.0/org/pac4j/sparkjava/CallbackRoute.html):
-
-```java
-CallbackRoute(org.pac4j.core.config.Config config) 
-CallbackRoute(org.pac4j.core.config.Config config, String defaultUrl) 
-CallbackRoute(org.pac4j.core.config.Config config, String defaultUrl, Boolean multiProfile) 
-CallbackRoute(org.pac4j.core.config.Config config, String defaultUrl, Boolean multiProfile, Boolean renewSession) 
-```
-
-and we see an example of invoking it at [line 45 of the spark-pac4j demo](https://github.com/pac4j/spark-pac4j-demo/blob/master/src/main/java/org/pac4j/demo/spark/SparkPac4jDemo.java#L45):
-
-```java 
-		final CallbackRoute callback = new CallbackRoute(config, null, true);
-```
-
-It appears, however that this in this case, the invocation of the `CallbackRoute` constructor is passing `true` for `multiProfile`, and is not passing anything for `renewSession`.    The documentation are not clear about whether `renewSession` defaults to `true` or `false` when it is not passed.     
-
-We don't have to guess, however, since [we have the source code here](https://github.com/pac4j/spark-pac4j/blob/master/src/main/java/org/pac4j/sparkjava/CallbackRoute.java).  And it would appear, looking at that file that the default value is `null` (since this is a `Boolean`, not a `bool`, that actually makes sense.)
-
-Looking further into the source code, and tracing things super deep, first from the spark-pac4j code back over to the pac4j package itself, we finally land at [these lines of code, lines 55-59 of DefaultCallbackLogic.java](https://github.com/pac4j/pac4j/blob/master/pac4j-core/src/main/java/org/pac4j/core/engine/DefaultCallbackLogic.java#L55):
-
-```java
-      if (inputRenewSession == null) {
-            renewSession = true;
-        } else {
-            renewSession = inputRenewSession;
-        }
-```
-
-With that mystery cleared up, we now can (sort of) safely rest knowing that by default, sessions are renewed when the callback is performed.
-
-And, that possibly the line of code we want for our callback is this one, i.e. one that takes the defaults for everything except the
-config, which already have:
-
-```
-        Config config = new
-            GithubOAuthConfigFactory(github_client_id,
-                                     github_client_secret).build();
-
-        final org.pac4j.sparkjava.CallbackRoute callback =
-            new org.pac4j.sparkjava.CallbackRoute(config);
-        get("/callback", callback);
-        post("/callback", callback);
-```
-
-Of course, for this, we need a config.  That comes from the `GithubOAuthConfigFactory`, to which we now add attributes
-for the `github_client_id` and `github_client_secret`, which have to get passed into the constructor:
-
-```java
-   private String github_client_id;
-    private String github_client_secret;
-
-    public GithubOAuthConfigFactory(String github_client_id,
-                             String github_client_secret) {
-        this.github_client_id = github_client_id;
-        this.github_client_secret = github_client_secret;
-    }
-```
-
-and we change the code for our GitHubClient to use these values:
-
-```java
-   GitHubClient githubClient =
-            new GitHubClient(github_client_id,
-                             github_client_secret);
-```
-
-At this point, we also realize that for later stages, we are going to need parameters for `salt` (a random string for cryptographic security of sessions) as well as a reference to the current `TemplateEngine` inside our ConfigFactory.  So we add those now:
-
-```java
-  public GithubOAuthConfigFactory(String github_client_id,
-                                    String github_client_secret,
-                                    String salt,
-                                    TemplateEngine templateEngine) {
-        this.github_client_id = github_client_id;
-        this.github_client_secret = github_client_secret;
-        this.salt = salt;
-	this.templateEngine = templateEngine;
-    }
-```
-
-And we change our code that invokes the factory.  Among other changes, we factor out the `MustacheTemplateEngine` invocations to 
-a single instance that is a private static class variable for the class containing our main, as is done in the [spark-pac4j-demo](https://github.com/pac4j/spark-pac4j-demo)
-
-```java
-   private final static MustacheTemplateEngine templateEngine = new MustacheTemplateEngine();
-   ...
-   public static void main(String[] args) {
-       ...
-       Config config = new
-            GithubOAuthConfigFactory(github_client_id,
-                                     github_client_secret,
-                                     "This_is_random_SALT_seoawefoauew89fu",
-                                     templateEngine).build();
-```
-
-
-At this point, when we run and try to access the `/callback` route, we get the error:
-
-```
-org.pac4j.core.exception.TechnicalException: httpActionAdapter cannot be null
-```
-
-Tracing this back, our diagnosis is that we need the following [line of code from the demo app](https://github.com/pac4j/spark-pac4j-demo/blob/master/src/main/java/org/pac4j/demo/spark/DemoConfigFactory.java#L78) in our ConfigFactory, which we currently do not have:
-
-```java
-        config.setHttpActionAdapter(new DemoHttpActionAdapter(templateEngine));
-```
-
-And that suggests we need a new class, similar to the [DemoHttpActionAdapter.java from the sparkpac4j demo](https://github.com/pac4j/spark-pac4j-demo/blob/master/src/main/java/org/pac4j/demo/spark/DemoHttpActionAdapter.java).
-
-Since we don't yet entirely understand what this class does, we take the class "as is", changing only the package name for now.
-
-We do understand it well enough, though to know that it depends on having two templates called `error401.mustache` and `error403.mustache`, so we copy those into our
-templates folder from the examples in the [spark-pac4j-demo](https://github.com/pac4j/spark-pac4j-dem) repo, here: [error401.mustache](https://github.com/pac4j/spark-pac4j-demo/blob/master/src/main/resources/templates/error401.mustache) and [error403.mustache](https://github.com/pac4j/spark-pac4j-demo/blob/master/src/main/resources/templates/error403.mustache).
-
-
-> 2) specific [matchers](http://www.pac4j.org/docs/matchers.html) via the `addMatcher(name, Matcher)` method.
->
-
-
-TODO: Continue from here.
