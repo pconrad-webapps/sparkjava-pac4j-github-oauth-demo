@@ -1,6 +1,6 @@
 # sparkjava-pac4j-github-oauth-demo
 
-WORK IN PROGRESS: Minimal demo of SparkJava with Pac4J doing Github OAuth
+Minimal demo of SparkJava with Pac4J doing Github OAuth
 
 Also uses mustache templating and a bootstrap based UI.
 
