@@ -85,7 +85,7 @@ public class SparkPac4jGithubOAuthDemo {
 	}
 	
 	model.put("session", map.entrySet());
-	/*
+	
 	java.util.List<CommonProfile> userProfiles = getProfiles(request,response);
 
 	map.put("profiles", userProfiles);
@@ -105,7 +105,7 @@ public class SparkPac4jGithubOAuthDemo {
 	} catch (Exception e) {
 	    e.printStackTrace();
 	}
-	*/
+	
 	return model;	
     }
 
