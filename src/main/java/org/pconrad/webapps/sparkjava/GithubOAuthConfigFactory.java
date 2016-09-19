@@ -9,8 +9,11 @@ import org.pac4j.oauth.client.GitHubClient;
 import spark.TemplateEngine;
 
 /** 
-    See: https://github.com/pac4j/pac4j/blob/master/pac4j-oauth/src/main/java/org/pac4j/oauth/client/GitHubClient.java
+    Creates an instance of org.pac4j.core.config.Config for GithubOAuth
 
+    @see <a href="https://github.com/pac4j/pac4j/blob/master/pac4j-oauth/src/main/java/org/pac4j/oauth/client/GitHubClient.java">GithubClient object in pac4j</a>
+
+    @author github.com/pconrad
  */
 
 public class GithubOAuthConfigFactory implements ConfigFactory {

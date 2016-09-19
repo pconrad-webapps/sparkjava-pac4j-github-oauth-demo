@@ -30,9 +30,13 @@ import com.github.mustachejava.Mustache;
 import com.github.mustachejava.MustacheFactory;
 
 /**
- * Defaults to the 'templates' directory under the resource path.
- *
- * @author Sam Pullara https://github.com/spullara
+ 
+  A MustacheTemplateEngine that follows the example code in <ahref="https://github.com/perwendel/spark-template-engines">https://github.com/perwendel/spark-template-engines</a>
+  Defaults to the 'templates' directory under the resource path.
+ 
+  @author Sam Pullara https://github.com/spullara
+  @see <a href="https://github.com/perwendel/spark-template-engines">https://github.com/perwendel/spark-template-engines</a>
+
  */
 
 public class MustacheTemplateEngine extends TemplateEngine {
