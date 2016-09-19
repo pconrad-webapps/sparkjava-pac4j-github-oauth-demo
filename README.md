@@ -174,3 +174,5 @@ Here is what the main "Getting Started" documentation about SparkJava has to say
 > request.session().raw()                    // Return servlet object
 > ```
 
+We added a `"/session"` route that prints out some information from the session so we can see what is being defined when we login, 
+and all that the values disappear when we logout.
