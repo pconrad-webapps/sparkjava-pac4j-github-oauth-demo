@@ -43,7 +43,8 @@ public class GithubOAuthConfigFactory implements ConfigFactory {
 	GitHubClient githubClient =
 	    new GitHubClient(github_client_id,
 			     github_client_secret);
-	
+
+	githubClient.setScope("user:email");
 	Clients clients = new Clients(this.callback_url, githubClient);
 	
 	org.pac4j.core.config.Config config =
