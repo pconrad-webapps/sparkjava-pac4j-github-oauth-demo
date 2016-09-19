@@ -1,19 +1,3 @@
-/*
- * Copyright 2014
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package org.pconrad.webapps.sparkjava;
 
 import java.util.HashMap;
@@ -40,20 +24,18 @@ import org.pac4j.core.profile.ProfileManager;
 import org.pac4j.sparkjava.SparkWebContext;
 
 /**
- * Mustache template engine example
- *
- * @author Sam Pullara https://github.com/spullara
- */
-public class MustacheTemplateExample {
+   Demo of Spark Pac4j with Github OAuth
 
+   @author pconrad
+ */
+public class SparkPac4jGithubOAuthDemo {
 
     private static java.util.List<CommonProfile> getProfiles(final Request request,
 						   final Response response) {
 	final SparkWebContext context = new SparkWebContext(request, response);
 	final ProfileManager manager = new ProfileManager(context);
 	return manager.getAll(true);
-    }
-    
+    }    
     
     private final static MustacheTemplateEngine templateEngine = new MustacheTemplateEngine();
 
@@ -92,17 +74,42 @@ public class MustacheTemplateExample {
 	
 	return model;	
     }
+
+    /**
+
+       return a HashMap with values of all the environment variables
+       listed; print error message for each missing one, and exit if any
+       of them is not defined.
+    */
+    
+    public static HashMap<String,String> getNeededEnvVars(String [] neededEnvVars) {
+	HashMap<String,String> envVars = new HashMap<String,String>();
+	
+	
+	for (String k:neededEnvVars) {
+	    String v = System.getenv(k);
+	    envVars.put(k,v);
+	}
+	
+	boolean error=false;
+	for (String k:neededEnvVars) {
+	    if (envVars.get(k)==null) {
+		error = true;
+		System.err.println("Error: Must define env variable " + k);
+	    }
+	}
+	if (error) { System.exit(1); }
+	
+	return envVars;
+    }
     
     public static void main(String[] args) {
-
-	String github_client_id = System.getenv("GITHUB_CLIENT_ID");
-	String github_client_secret = System.getenv("GITHUB_CLIENT_SECRET");
-
-	if (github_client_id==null || github_client_secret==null) {
-	    System.err.println("Warning: need to define GITHUB_CLIENT_ID \n" +
-			       "         and GITHUB_CLIENT_SECRET");
-	    System.exit(1);
-	}
+	
+	HashMap<String,String> envVars =
+	    getNeededEnvVars(new String []{ "GITHUB_CLIENT_ID",
+					    "GITHUB_CLIENT_SECRET",
+					    "GITHUB_CALLBACK_URL",
+					    "APPLICATION_SALT"});
 	
 	Spark.staticFileLocation("/static");
 	
@@ -115,9 +122,10 @@ public class MustacheTemplateExample {
 	}
 
 	Config config = new
-	    GithubOAuthConfigFactory(github_client_id,
-				     github_client_secret,
-				     "This_is_random_SALT_seoawefoauew89fu",
+	    GithubOAuthConfigFactory(envVars.get("GITHUB_CLIENT_ID"),
+				     envVars.get("GITHUB_CLIENT_SECRET"),
+				     envVars.get("GITHUB_CALLBACK_URL"),
+				     envVars.get("APPLICATION_SALT"),
 				     templateEngine).build();
 
 	final SecurityFilter
@@ -136,7 +144,8 @@ public class MustacheTemplateExample {
 	get("/logout", new ApplicationLogoutRoute(config, "/"));
 	
 	get("/session",
-	    (request, response) -> new ModelAndView(buildModel(request,response),"session.mustache"),
+	    (request, response) -> new ModelAndView(buildModel(request,response),
+						    "session.mustache"),
 	    templateEngine);
 	
 	final org.pac4j.sparkjava.CallbackRoute callback =

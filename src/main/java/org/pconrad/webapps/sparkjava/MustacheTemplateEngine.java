@@ -34,6 +34,7 @@ import com.github.mustachejava.MustacheFactory;
  *
  * @author Sam Pullara https://github.com/spullara
  */
+
 public class MustacheTemplateEngine extends TemplateEngine {
 
     private MustacheFactory mustacheFactory;

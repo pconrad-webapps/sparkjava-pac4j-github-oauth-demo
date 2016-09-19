@@ -10,10 +10,18 @@ import java.util.HashMap;
 
 import static spark.Spark.halt;
 
+/**
+   This class taken pretty much verbatim from 
+   https://github.com/pac4j/spark-pac4j-demo
+*/
+   
+
 public class DemoHttpActionAdapter extends DefaultHttpActionAdapter {
 
     private final TemplateEngine templateEngine;
 
+    
+    
     public DemoHttpActionAdapter(final TemplateEngine templateEngine) {
         this.templateEngine = templateEngine;
     }
