@@ -23,6 +23,18 @@ import org.pac4j.core.profile.CommonProfile;
 import org.pac4j.core.profile.ProfileManager;
 import org.pac4j.sparkjava.SparkWebContext;
 
+import org.kohsuke.github.GHRepository;
+import org.kohsuke.github.GHRepository.Contributor;
+import org.kohsuke.github.GHUser;
+import org.kohsuke.github.GitHub;
+import org.kohsuke.github.GHOrganization;
+
+
+import org.pac4j.oauth.profile.github.GitHubProfile;
+
+import java.util.Collection;
+
+
 /**
    Demo of Spark Pac4j with Github OAuth
 
@@ -39,6 +51,29 @@ public class SparkPac4jGithubOAuthDemo {
     
     private final static MustacheTemplateEngine templateEngine = new MustacheTemplateEngine();
 
+    /** 
+	add github information to the session
+
+    */
+    private static Map addGithub(Map model, Request request, Response response) {
+	GitHubProfile ghp = ((GitHubProfile)(model.get("ghp")));
+	if (ghp == null) {
+	    System.out.println("No github profile");
+	    return model;
+	}
+	try {
+	    String accessToken = ghp.getAccessToken();
+	    GitHub gh = null;
+	    gh =  GitHub.connect( model.get("userid").toString(), accessToken);
+	    GHOrganization org = gh.getOrganization("UCSB-CS56-Projects");
+	    java.util.Map<java.lang.String,GHRepository> repos = org.getRepositories();
+	    model.put("repos",repos.entrySet());
+	} catch (Exception e) {
+	    e.printStackTrace();
+	}
+	return model;
+    }
+    
     private static Map buildModel(Request request, Response response) {
 
 	final Map model = new HashMap<String,Object>();
@@ -60,9 +95,8 @@ public class SparkPac4jGithubOAuthDemo {
 		CommonProfile firstProfile = userProfiles.get(0);
 		map.put("firstProfile", firstProfile);	
 		
-		org.pac4j.oauth.profile.github.GitHubProfile ghp = 
-		    (org.pac4j.oauth.profile.github.GitHubProfile) firstProfile;
-		
+		GitHubProfile ghp = (GitHubProfile) firstProfile;
+		model.put("ghp", ghp);
 		model.put("userid",ghp.getUsername());
 		model.put("name",ghp.getDisplayName());
 		model.put("avatar_url",ghp.getPictureUrl());
@@ -147,6 +181,13 @@ public class SparkPac4jGithubOAuthDemo {
 	    (request, response) -> new ModelAndView(buildModel(request,response),
 						    "session.mustache"),
 	    templateEngine);
+
+	get("/github",
+	    (request, response) ->
+	    new ModelAndView(addGithub(buildModel(request,response),request,response),
+			     "github.mustache"),
+	    templateEngine);
+
 	
 	final org.pac4j.sparkjava.CallbackRoute callback =
 	    new org.pac4j.sparkjava.CallbackRoute(config);
