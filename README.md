@@ -2,6 +2,8 @@
 
 Minimal demo of SparkJava with Pac4J doing Github OAuth
 
+Running at: http://sparkjava-github-oauth-demo.herokuapp.com/
+
 Also uses mustache templating and a bootstrap based UI.
 
 Requires Java 1.8, and Maven (`mvn` command)
