@@ -1,0 +1,4 @@
+heroku config:set GITHUB_CLIENT_ID=111111111111
+heroku config:set GITHUB_CLIENT_SECRET=2222222222222222222
+heroku config:set GITHUB_CALLBACK_URL=http://localhost:4567/callback
+heroku config:set  APPLICATION_SALT=3333333333333333333
